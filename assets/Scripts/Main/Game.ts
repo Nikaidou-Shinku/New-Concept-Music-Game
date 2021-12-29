@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, GraphicsComponent, Graphics, Prefab, director, instantiate, tween, Vec3, input, Input, EventKeyboard, KeyCode, game } from 'cc';
+import { _decorator, Component, Node, GraphicsComponent, Graphics, Prefab, director, instantiate, tween, Vec3, input, Input, EventKeyboard, KeyCode, game, AudioSource, Label } from 'cc';
 const { ccclass, property } = _decorator;
 
 /**
@@ -21,7 +21,21 @@ export class Game extends Component {
     @property({type: Graphics})
     BackgroundGridLine = null;
 
+    @property({type: Label})
+    scoreLabel = null;
+    @property({type: Label})
+    comboLabel = null;
+
+    @property({type: Node})
+    tapAudioNode = null;
+    @property({type: Node})
+    errAudioNode = null;
+
+    tapAudioSource = null;
+    errAudioSource = null;
+
     score = 0;
+    comboNum = 0;
 
     randomInt(min: number, max: number): number {
         const range = max - min;
@@ -107,24 +121,56 @@ export class Game extends Component {
         }
     }
 
+    addCombo () {
+        ++ this.comboNum;
+        this.updateCombo();
+    }
+
+    clearCombo () {
+        this.comboNum = 0;
+        this.comboLabel.string = "";
+    }
+
     press(pos: number) {
         if (pos === this.blockList[0].pos) {
-            ++ this.score;
+            this.tapAudioSource.play();
+            this.addCombo();
+            this.score += Math.min(this.comboNum, 5);
+            this.updateScore(this.score);
             this.addBlock();
         } else {
-            // game.pause();
+            this.clearCombo();
+            this.errAudioSource.play();
         }
+    }
+
+    setComboBigAndSmall () {
+        this.comboLabel.fontSize = 50;
+        tween(this.comboLabel)
+            .to(0.05, { fontSize: 80 })
+            .to(0.1, { fontSize: 50 })
+            .start();
+    }
+
+    updateScore (score: number) {
+        this.scoreLabel.string = "分数：" + score;
+    }
+    updateCombo () {
+        this.comboLabel.string = this.comboNum + " COMBO!";
+        this.setComboBigAndSmall();
     }
 
     start () {
         this.drawGridLine();
         this.initBlocks();
-        
-        console.log('init Over!');
+        this.updateScore(0);
+        this.comboLabel.string = "";
     }
 
     onLoad () {
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+        this.tapAudioSource = this.tapAudioNode.getComponent(AudioSource);
+        this.errAudioSource = this.errAudioNode.getComponent(AudioSource);
     }
 
     onDestroy () {
