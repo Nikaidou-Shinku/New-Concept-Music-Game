@@ -1,5 +1,5 @@
-import { _decorator, Component, Node, director } from 'cc';
-const { ccclass, property } = _decorator;
+import { _decorator, Component, director } from 'cc';
+const { ccclass } = _decorator;
 
 /**
  * Predefined variables
@@ -15,8 +15,13 @@ const { ccclass, property } = _decorator;
 
 @ccclass('startGame')
 export class startGame extends Component {
-    start () { }
     gotoMain () {
         director.loadScene("Main");
+    }
+    gotoTitle () {
+        director.loadScene("Start");
+    }
+    gotoHelp () {
+        director.loadScene("Help");
     }
 }

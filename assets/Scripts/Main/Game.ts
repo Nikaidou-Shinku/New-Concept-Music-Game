@@ -1,4 +1,5 @@
-import { _decorator, Component, Node, GraphicsComponent, Graphics, Prefab, director, instantiate, tween, Vec3, input, Input, EventKeyboard, KeyCode, game, AudioSource, Label } from 'cc';
+import { _decorator, Component, Node, Graphics, Prefab, director, instantiate, tween, Vec3, input, Input, EventKeyboard, KeyCode, AudioSource, Label } from 'cc';
+import { com } from '../Common';
 const { ccclass, property } = _decorator;
 
 /**
@@ -25,6 +26,8 @@ export class Game extends Component {
     scoreLabel = null;
     @property({type: Label})
     comboLabel = null;
+    @property({type: Label})
+    timeLabel = null;
 
     @property({type: Node})
     tapAudioNode = null;
@@ -36,6 +39,9 @@ export class Game extends Component {
 
     score = 0;
     comboNum = 0;
+    nowTime = 0;
+    endTime = 998244353;
+    isStart = false;
 
     randomInt(min: number, max: number): number {
         const range = max - min;
@@ -133,12 +139,16 @@ export class Game extends Component {
 
     press(pos: number) {
         if (pos === this.blockList[0].pos) {
+            if (!this.isStart) {
+                this.isStart = true;
+                this.endTime = this.nowTime + 20;
+            }
             this.tapAudioSource.play();
             this.addCombo();
             this.score += Math.min(this.comboNum, 5);
             this.updateScore(this.score);
             this.addBlock();
-        } else {
+        } else if (this.isStart) {
             this.clearCombo();
             this.errAudioSource.play();
         }
@@ -165,6 +175,10 @@ export class Game extends Component {
         this.initBlocks();
         this.updateScore(0);
         this.comboLabel.string = "";
+        this.timeLabel.string = "TIME:20";
+        com.lastScore = 0;
+
+        this.nowTime = 0;
     }
 
     onLoad () {
@@ -194,7 +208,16 @@ export class Game extends Component {
         }
     }
 
-    // update (deltaTime: number) {
-    //     // [4]
-    // }
+    update (deltaTime: number) {
+        this.nowTime += deltaTime;
+
+        if (this.isStart) {
+            let resTime = this.endTime - this.nowTime;
+            this.timeLabel.string = `TIME:${resTime.toFixed(0)}`;
+            if (this.nowTime >= this.endTime) {
+                com.lastScore = this.score;
+                director.loadScene("Result");
+            }
+        }
+    }
 }
